@@ -51,7 +51,7 @@ class MDLP(object):
         for i in range(len(variable)):
             if variable[i] <= 1e-10:
                 variable[i] = 1
-        return log(variable)
+        return np.log(variable)
 
     def entropy(self, variable):
         '''
