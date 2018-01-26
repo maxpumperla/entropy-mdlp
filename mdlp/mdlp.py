@@ -1,5 +1,3 @@
-from __future__ import print_function
-from six.moves import range
 from math import log
 import numpy as np
 
@@ -23,18 +21,11 @@ class MDLP(object):
         '''
         Create a numpy array that counts the occurrences
         of values of the input vector
-
         Example:
         target_table([1,2,2,3,4,5,5,5,5,6])
         >>> array([1,2,1,1,4,1])
         '''
-        levels = self.levels(target)
-        values = [0 for i in range(len(levels))]
-        for item in target:
-            for i in range(len(levels)):
-                if item == levels[i]:
-                    values[i] = values[i] + 1
-        return np.array(values)
+        return np.unique(target, return_counts=True)[1]
 
     def stable_log(self, input):
         '''
@@ -42,57 +33,35 @@ class MDLP(object):
         replaces elements smaller than 1*e^(-10) by
         one to avoid infinite values, then applies log as usual.
         The input variable has to be a numpy array.
-
         Example:
         stable_log([0,1,2])
         >>> array([1,2,3,4,5,6])
         '''
-        variable = input.copy()
-        for i in range(len(variable)):
-            if variable[i] <= 1e-10:
-                variable[i] = 1
-        return np.log(variable)
-
+        copy = input.copy()
+        copy[copy <= 1e-10] = 1
+        return np.log(copy)
+        
     def entropy(self, variable):
         '''
         Compute the Shannon entropy of the input variable
-
         Example:
         stable_log(np.array([0,1,2]))
         >>> array([0., 0., 0.69314718])
         '''
-        prob = self.target_table(variable)/float(len(variable))
+        prob = self.target_table(variable) / len(variable)
         ent = -sum(prob * self.stable_log(prob))
+        print(ent)
         return ent
 
     def levels(self, variable):
         '''
         Create a numpy array that lists each value of the
         input vector once.
-
         Example:
         levels([1,2,2,3,4,5,5,5,5,6])
         >>> array([1,2,3,4,5,6])
         '''
-        levels = []
-        for item in variable:
-            if item not in levels:
-                levels.append(item)
-        return np.array(sorted(levels))
-
-    def barrier(self, x, value):
-        '''
-        Compute the first index of a vector that is larger
-        than the specified barrier minus one.
-        This function is intended to be applied to a sorted
-        list, in order to split the list in two by the barrier.
-
-        barrier([1,2,2,3,4,5,5,5,5,6],4)
-        >>> 5
-        '''
-        for i in range(len(x)):
-            if x[i] > value:
-                return i
+        return np.unique(variable)
 
     def stopping_criterion(self, cut_idx, target, ent):
         '''
@@ -106,16 +75,16 @@ class MDLP(object):
         '''
         n = len(target)
         target_entropy = self.entropy(target)
-        left = range(0, cut_idx)
-        right = range(cut_idx, n)
         gain = target_entropy - ent
-        k = len(self.levels(target))
-        k1 = len(self.levels(target[left]))
-        k2 = len(self.levels(target[right]))
+        
+        k = len(np.unique(target))
+        k1 = len(np.unique(target[: cut_idx]))
+        k2 = len(np.unique(target[cut_idx: ]))
+        
         delta = (log(3**k - 2) - (k * target_entropy
-                 - k1 * self.entropy(target[left])
-                 - k2 * self.entropy(target[right])))
-        cond = log(n - 1)/float(n) + delta/float(n)
+                 - k1 * self.entropy(target[: cut_idx])
+                 - k2 * self.entropy(target[cut_idx: ])))
+        cond = log(n - 1) / n + delta / n
         if gain >= cond:
             return gain
         else:
@@ -133,13 +102,13 @@ class MDLP(object):
         init_entropy = 9999
         current_entropy = init_entropy
         index = None
-        for i in range(n-1):
+        for i in range(n - 1):
             if (x[i] != x[i+1]):
-                cut = (x[i]+x[i+1])/2.0
-                cutx = self.barrier(x, cut)
-                weight_cutx = cutx / float(n)
-                left_entropy = weight_cutx * self.entropy(y[0:cutx])
-                right_entropy = (1-weight_cutx) * self.entropy(y[cutx:n])
+                cut = (x[i] + x[i + 1]) / 2.
+                cutx = bisect_right(x, cut)
+                weight_cutx = cutx / n
+                left_entropy = weight_cutx * self.entropy(y[: cutx])
+                right_entropy = (1 - weight_cutx) * self.entropy(y[cutx: ])
                 temp = left_entropy + right_entropy
                 if temp < current_entropy:
                     current_entropy = temp
@@ -176,7 +145,7 @@ class MDLP(object):
                 return None
 
         def part(low=0, upp=len(xo)-1, cut_points=np.array([]), depth=depth):
-            x = xo[low:upp]
+            x = xo[low: upp]
             if len(x) < 2:
                 return cut_points
             cc = getIndex(low, upp, depth=depth)
