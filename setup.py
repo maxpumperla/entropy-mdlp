@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from setuptools import setup
 from setuptools import find_packages
 
-setup(name='entropy-mdlp',
+setup(name='entropymdlp',
       version='0.1',
       description='Minimum description length principle',
       url='http://github.com/maxpumperla/entropy-mdlp',

@@ -1,5 +1,6 @@
 from math import log
 import numpy as np
+from bisect import bisect_right
 
 
 class MDLP(object):
