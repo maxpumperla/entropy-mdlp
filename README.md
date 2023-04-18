@@ -10,8 +10,7 @@ pip install entropymdlp
 and then run an example like so:
 
 ```python
-from entropymdlp.mdlp import MDLP
-mdlp = MDLP()
+import entropymdlp as mdlp
 
 x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 y = [0, 0, 0, 1, 1, 1, 1, 1, 1, 1]
